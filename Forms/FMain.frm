@@ -20,7 +20,7 @@ Begin VB.Form FMain
    StartUpPosition =   3  'Windows-Standard
    Begin VB.ComboBox CmbZoom 
       Height          =   375
-      Left            =   840
+      Left            =   960
       TabIndex        =   1
       Top             =   0
       Width           =   1095
@@ -202,81 +202,88 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Private m_Image    As IPictureDisp
+Private m_Image  As IPictureDisp
 Private m_PBZoom As PictureBoxZoom
 
 Private Sub Form_Load()
     Set m_Image = LoadPicture(App.Path & "\Bild4.bmp")
-    'Debug.Print m_Image.Width & " x " & m_Image.Height
-    InitZoomCombo 15
-    Set m_PBZoom = MNew.PictureBoxZoom(Me.Picture1, m_Image)
+    Set m_PBZoom = MNew.PictureBoxZoom(Me, Me.Picture1, m_Image)
+    InitZoom
 End Sub
 
-Private Function HiMetric_ToPixel(ByVal Value_inHiM As Long) As Long
-    HiMetric_ToPixel = Value_inHiM / 2.54 * 96 / 1000
-End Function
-
-Private Function Pixel_ToHiMetric(ByVal Value_pix As Long) As Long
-    Pixel_ToHiMetric = Value_pix * 2.54 / 96 * 1000
-End Function
+'Private Function HiMetric_ToPixel(ByVal Value_inHiM As Long) As Long
+'    HiMetric_ToPixel = Value_inHiM / 2.54 * 96 / 1000
+'End Function
+'
+'Private Function Pixel_ToHiMetric(ByVal Value_pix As Long) As Long
+'    Pixel_ToHiMetric = Value_pix * 2.54 / 96 * 1000
+'End Function
 
 Private Sub Form_Resize()
     Dim L As Single: L = Picture1.Left
     Dim T As Single: T = Picture1.Top
     Dim W As Single: W = Me.ScaleWidth
     Dim H As Single: H = Me.ScaleHeight
-    If W > 0 And H > 0 Then Picture1.Move L, T, W, H
+    If W > 0 And H > 0 Then Picture1.Move L, T, W, H: m_PBZoom.Refresh
 End Sub
 
-Sub InitZoomCombo(ByVal ListIndex As Integer)
+Sub InitZoom()
     Dim i As Long
     For i = 16 To 1 Step -1: CmbZoom.AddItem CStr(i) & ":1": Next
     For i = 2 To 16:         CmbZoom.AddItem "1:" & CStr(i): Next
-    CmbZoom.ListIndex = ListIndex
+    If m_PBZoom Is Nothing Then CmbZoom.Text = "1:1" Else CmbZoom.Text = m_PBZoom.PropZoomToStr
+    mnuViewZoomNormal.Checked = True
 End Sub
 
 Private Sub mnuEditPaste_Click()
     If Not Clipboard.GetFormat(ClipBoardConstants.vbCFBitmap) Then Exit Sub
     Set m_Image = Clipboard.GetData(ClipBoardConstants.vbCFBitmap)
-    Debug.Print m_Image.Width & " x " & m_Image.Height
-    'If m_PBZoom Is Nothing Then
-        Set m_PBZoom = MNew.PictureBoxZoom(Me.Picture1, m_Image)
-    'Else
-    '    Set m_PBZoom.Image = m_Image
-    'End If
+    Set m_PBZoom = MNew.PictureBoxZoom(Me, Me.Picture1, m_Image)
 End Sub
 
-Private Sub mnuViewZoomNormal_Click()
-    CmbZoom.ListIndex = 15
-End Sub
-
-Sub UnCheckAllMnuViewZoom()
+Private Sub mnuViewZoom_UnCheckAll()
     Dim i As Integer
     For i = mnuViewZoomIn.LBound To mnuViewZoomIn.UBound:   mnuViewZoomIn(i).Checked = False:  Next
     For i = mnuViewZoomOut.LBound To mnuViewZoomOut.UBound: mnuViewZoomOut(i).Checked = False: Next
+    mnuViewZoomNormal.Checked = False
+End Sub
+
+Private Sub mnuViewZoomNormal_Click()
+    If m_Image Is Nothing Then Exit Sub
+    m_PBZoom.ZoomFactor = 1
+    CmbZoom.Text = m_PBZoom.PropZoomToStr
+    mnuViewZoom_UnCheckAll
+    mnuViewZoomNormal.Checked = True
 End Sub
 
 Private Sub mnuViewZoomIn_Click(Index As Integer)
-    UnCheckAllMnuViewZoom
-    CmbZoom.ListIndex = 16 - Index
+    If m_Image Is Nothing Then Exit Sub
+    m_PBZoom.ZoomFactor = Index
+    CmbZoom.Text = m_PBZoom.PropZoomToStr
+    mnuViewZoom_UnCheckAll
     mnuViewZoomIn(Index).Checked = True
 End Sub
 
 Private Sub mnuViewZoomOut_Click(Index As Integer)
-    UnCheckAllMnuViewZoom
-    CmbZoom.ListIndex = 14 + Index
+    If m_PBZoom Is Nothing Then Exit Sub
+    m_PBZoom.ZoomFactor = 1 / Index
+    CmbZoom.Text = m_PBZoom.PropZoomToStr
+    mnuViewZoom_UnCheckAll
     mnuViewZoomOut(Index).Checked = True
 End Sub
 
 Private Sub CmbZoom_Click()
     If m_PBZoom Is Nothing Then Exit Sub
-    Dim li As Long:     li = CmbZoom.ListIndex
-    If li < 0 Then Exit Sub
-    Dim s As String:     s = CmbZoom.List(li)
-    Dim sa() As String: sa = Split(s, ":")
-    m_PBZoom.ZoomFactor = CDbl(sa(0)) / CDbl(sa(1))
-End Sub
-
-Sub UpdateView()
-    m_PBZoom.Refresh
+    Dim li As Long:     li = CmbZoom.ListIndex - 15
+    Dim z As Double: z = IIf(li = 0, 1, IIf(li < 1, Abs(li) + 1, 1))
+    Dim n As Double: n = IIf(li = 0, 1, IIf(li < 1, 1, Abs(li) + 1))
+    m_PBZoom.ZoomFactor = z / n
+    mnuViewZoom_UnCheckAll
+    If z = 1 And n = 1 Then
+        mnuViewZoomNormal.Checked = True
+    ElseIf z = 1 Then
+        mnuViewZoomOut(CLng(n)).Checked = True
+    ElseIf n = 1 Then
+        mnuViewZoomIn(CLng(z)).Checked = True
+    End If
 End Sub

@@ -227,49 +227,30 @@ Private Sub Form_Resize()
     If W > 0 And H > 0 Then Picture1.Move L, T, W, H: m_PBZoom.Refresh
 End Sub
 
-Sub InitZoom()
-    Dim i As Long
-    For i = 16 To 1 Step -1: CmbZoom.AddItem CStr(i) & ":1": Next
-    For i = 2 To 16:         CmbZoom.AddItem "1:" & CStr(i): Next
-    If m_PBZoom Is Nothing Then CmbZoom.Text = "1:1" Else CmbZoom.Text = m_PBZoom.PropZoomToStr
-    mnuViewZoomNormal.Checked = True
-End Sub
-
 Private Sub mnuEditPaste_Click()
     If Not Clipboard.GetFormat(ClipBoardConstants.vbCFBitmap) Then Exit Sub
     Set m_Image = Clipboard.GetData(ClipBoardConstants.vbCFBitmap)
     Set m_PBZoom = MNew.PictureBoxZoom(Me, Me.Picture1, m_Image)
 End Sub
 
-Private Sub mnuViewZoom_UnCheckAll()
-    Dim i As Integer
-    For i = mnuViewZoomIn.LBound To mnuViewZoomIn.UBound:   mnuViewZoomIn(i).Checked = False:  Next
-    For i = mnuViewZoomOut.LBound To mnuViewZoomOut.UBound: mnuViewZoomOut(i).Checked = False: Next
-    mnuViewZoomNormal.Checked = False
+' v ' ############################## ' v '    Controls for PictureBoxZoom    ' v ' ############################## ' v '
+Sub InitZoom()
+    Dim i As Long
+    For i = 16 To 1 Step -1: CmbZoom.AddItem CStr(i) & ":1": Next
+    For i = 2 To 16:         CmbZoom.AddItem "1:" & CStr(i): Next
+    CmbZoom.ListIndex = 15
 End Sub
 
 Private Sub mnuViewZoomNormal_Click()
-    If m_Image Is Nothing Then Exit Sub
-    m_PBZoom.ZoomFactor = 1
-    CmbZoom.Text = m_PBZoom.PropZoomToStr
-    mnuViewZoom_UnCheckAll
-    mnuViewZoomNormal.Checked = True
+    CmbZoom.ListIndex = 15
 End Sub
 
 Private Sub mnuViewZoomIn_Click(Index As Integer)
-    If m_Image Is Nothing Then Exit Sub
-    m_PBZoom.ZoomFactor = Index
-    CmbZoom.Text = m_PBZoom.PropZoomToStr
-    mnuViewZoom_UnCheckAll
-    mnuViewZoomIn(Index).Checked = True
+    CmbZoom.ListIndex = 16 - Index
 End Sub
 
 Private Sub mnuViewZoomOut_Click(Index As Integer)
-    If m_PBZoom Is Nothing Then Exit Sub
-    m_PBZoom.ZoomFactor = 1 / Index
-    CmbZoom.Text = m_PBZoom.PropZoomToStr
-    mnuViewZoom_UnCheckAll
-    mnuViewZoomOut(Index).Checked = True
+    CmbZoom.ListIndex = Index + 14
 End Sub
 
 Private Sub CmbZoom_Click()
@@ -287,3 +268,11 @@ Private Sub CmbZoom_Click()
         mnuViewZoomIn(CLng(z)).Checked = True
     End If
 End Sub
+
+Private Sub mnuViewZoom_UnCheckAll()
+    Dim i As Integer
+    For i = mnuViewZoomIn.LBound To mnuViewZoomIn.UBound:   mnuViewZoomIn(i).Checked = False:  Next
+    For i = mnuViewZoomOut.LBound To mnuViewZoomOut.UBound: mnuViewZoomOut(i).Checked = False: Next
+    mnuViewZoomNormal.Checked = False
+End Sub
+

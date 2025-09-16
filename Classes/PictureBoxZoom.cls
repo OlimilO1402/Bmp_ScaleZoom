@@ -51,6 +51,11 @@ End Property
 
 Public Function PropZoomToStr() As String
     PropZoomToStr = IIf(m_ZoomFactor <= 1, "1:" & 1 / m_ZoomFactor, m_ZoomFactor & ":1")
+    Debug.Print CmbZoomListIndex
+End Function
+
+Public Function CmbZoomListIndex() As Integer
+    CmbZoomListIndex = IIf(m_ZoomFactor <= 1, 1 / m_ZoomFactor + 15, m_ZoomFactor - 16)
 End Function
 
 Public Property Get Image() As IPictureDisp
